@@ -13,23 +13,13 @@ public class CocktailBar extends AbstractLoggingActor {
   private ActorRef waiter = createWaiter();
 
   private ActorRef createWaiter() {
-    return getContext().actorOf(Waiter.props(), "waiter");
+    return getContext().actorOf(WaiterScala.props(), "waiter");
   }
 
   public static Props props() {
     return Props.create(CocktailBar.class, () -> new CocktailBar());
   }
 
-
-  @Override
-  public SupervisorStrategy supervisorStrategy() {
-    return new OneForOneStrategy(
-            DeciderBuilder
-                    .match(Guest.DrunkException.class, c -> {
-                      return SupervisorStrategy.stop();
-                    })
-                    .build());
-  }
 
   public static final class CreateGuest implements Serializable {
     public final Drink drink;
@@ -57,7 +47,11 @@ public class CocktailBar extends AbstractLoggingActor {
     return getContext().actorOf(Guest.props(waiter, createGuest.drink, createGuest.maxDrinkCount));
   }
 
-
+  @Override
+  public SupervisorStrategy supervisorStrategy() {
+    return new OneForOneStrategy(false, DeciderBuilder.
+            match(GuestScala.DrunkException.class,e -> SupervisorStrategy.restart()).build());
+  }
 
 
 
